@@ -1,6 +1,16 @@
+//ChatRoom
 POST http://localhost:9001/v1/chatroom HTTP/1.1
 Content-Type: application/json
 
 {
     "chat_room_name": 2
+}
+
+// ParticipantsRoom
+POST http://localhost:9001/v1/participants HTTP/1.1
+Content-Type: application/json
+
+{   
+    "participant_name": "enzo",
+    "chat_room_id": "b7168f73-84b3-4181-a746-5cd4158f9786"
 }

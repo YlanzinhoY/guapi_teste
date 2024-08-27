@@ -14,6 +14,7 @@ type ChatRoomHandler struct {
 }
 
 func NewChatRoomHandler(dbHandler *db.Queries) *ChatRoomHandler {
+
 	return &ChatRoomHandler{
 		dbHandler: dbHandler,
 	}

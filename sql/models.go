@@ -5,12 +5,22 @@
 package sql
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 )
 
 type ChatRoom struct {
 	ChatRoomID   uuid.UUID
 	ChatRoomName int32
+}
+
+type Message struct {
+	MessageID      uuid.UUID
+	Content        string
+	CreatedAt      time.Time
+	ParticipantsID uuid.UUID
+	ChatRoomID     uuid.UUID
 }
 
 type Participant struct {

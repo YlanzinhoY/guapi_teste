@@ -1,6 +1,3 @@
-Contexto Geral do Projeto
-Você deve criar uma API RESTful utilizando Go, Echo, e sqlc para gerenciar salas de chat, participantes, mensagens, e curtidas. Além disso, deve implementar uma funcionalidade de WebSocket para notificação de novas mensagens e curtidas.
-
 ## Parte 1: Criação de Sala e Participantes
     Objetivo: Implementar rotas para criar salas de chat e adicionar participantes a essas salas.
     Requisitos:

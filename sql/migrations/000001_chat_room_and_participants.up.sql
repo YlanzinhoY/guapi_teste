@@ -1,4 +1,4 @@
-CREATE TABLE chat_room(
+CREATE TABLE IF NOT EXISTS chat_room(
 chat_room_id uuid DEFAULT uuid_generate_v4(),
 chat_room_name int UNIQUE NOT NULL,
 
@@ -6,7 +6,7 @@ PRIMARY KEY(chat_room_id)
 );
 
 
-CREATE TABLE participants(
+CREATE TABLE IF NOT EXISTS participants(
 participants_id uuid DEFAULT uuid_generate_v4(),
 name varchar(255) NOT NULL,
 

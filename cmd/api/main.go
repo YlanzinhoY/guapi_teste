@@ -1,44 +1,37 @@
 package main
 
 import (
-	"database/sql"
-	"log"
-
+	"github.com/gorilla/websocket"
 	handler "github.com/ylanzinhoy/guapi_teste/internal/Handler"
-	db "github.com/ylanzinhoy/guapi_teste/sql"
+	"github.com/ylanzinhoy/guapi_teste/internal/repository"
 
 	"github.com/labstack/echo/v4"
-	_ "github.com/lib/pq"
+	"github.com/labstack/echo/v4/middleware"
+)
+
+var (
+	ws websocket.Upgrader
 )
 
 func main() {
 
 	e := echo.New()
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
 
-	connString := "host=localhost port=5432 user=postgres password=postgres dbname=guapi_teste sslmode=disable"
+	r := repository.NewDatabaseRepository("host=localhost port=5432 user=postgres password=postgres dbname=guapi_teste sslmode=disable")
+	defer r.DatabaseConn()
 
-	dbConn, err := sql.Open("postgres", connString)
-
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
-
-	defer func(dbConn *sql.DB) {
-		err := dbConn.Close()
-		if err != nil {
-			log.Fatal(err)
-			return
-		}
-	}(dbConn)
-
-	query := db.New(dbConn)
-
-	chatRoomHandler := handler.NewChatRoomHandler(query)
+	chatRoomHandler := handler.NewChatRoomHandler(r.DbHandler())
 	e.POST("/v1/chatroom", chatRoomHandler.CreateChatRoom)
 
-	participatnsHandler := handler.NewParticipantsHandler(query)
+	participatnsHandler := handler.NewParticipantsHandler(r.DbHandler())
 	e.POST("/v1/participants", participatnsHandler.CreateParticipants)
 
+	messageHandler := handler.NewMessageHandler(r.DbHandler(), &ws, make(map[*websocket.Conn]bool))
+
+	e.GET("/ws/:chatRoomId/:participantId", messageHandler.CreateMessageWS)
+
 	e.Logger.Fatal(e.Start(":9001"))
+
 }
