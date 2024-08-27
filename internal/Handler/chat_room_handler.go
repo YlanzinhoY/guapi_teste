@@ -45,3 +45,20 @@ func (s *ChatRoomHandler) CreateChatRoom(c echo.Context) error {
 
 	return c.JSON(http.StatusCreated, chatRoomEntity)
 }
+
+func (s *ChatRoomHandler) DeleteChatRoom(c echo.Context) error {
+	idParam := uuid.MustParse(c.Param("id"))
+	res, err := s.dbHandler.DeleteChatRoom(c.Request().Context(), idParam)
+
+	if err != nil {
+		return c.JSON(404, map[string]string{
+			"error": "error",
+		})
+	}
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"msg":  "deleted",
+		"data": res,
+	})
+
+}

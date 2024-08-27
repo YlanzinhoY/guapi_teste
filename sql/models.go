@@ -16,11 +16,11 @@ type ChatRoom struct {
 }
 
 type Message struct {
-	MessageID      uuid.UUID
-	Content        string
-	CreatedAt      time.Time
-	ParticipantsID uuid.UUID
-	ChatRoomID     uuid.UUID
+	MessageID        uuid.UUID
+	Content          string
+	CreatedAt        time.Time
+	FkParticipantsID uuid.UUID
+	FkChatRoomID     uuid.UUID
 }
 
 type Participant struct {

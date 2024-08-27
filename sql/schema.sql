@@ -19,7 +19,7 @@ message_id uuid NOT NULL DEFAULT uuid_generate_v4(),
 content text NOT NULL,
 created_at timestamp NOT NULL DEFAULT now(),
 
-PRIMARY KEY(messahe_id),
-participants_id uuid NOT NULL REFERENCES participants(participants_id) ON DELETE CASCADE,
-chat_room_id uuid NOT NULL REFERENCES chat_room(chat_room_id) ON DELETE CASCADE
+PRIMARY KEY(message_id),
+fk_participants_id uuid NOT NULL REFERENCES participants(participants_id) ON DELETE CASCADE,
+fk_chat_room_id uuid NOT NULL REFERENCES chat_room(chat_room_id) ON DELETE RESTRICT
 );

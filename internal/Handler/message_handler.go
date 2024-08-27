@@ -56,10 +56,10 @@ func (s *MessageHandler) CreateMessageWS(c echo.Context) error {
 		messageEntity.CreatedAt = time.Now()
 
 		err = s.dbHandler.CreateMessage(c.Request().Context(), db.CreateMessageParams{
-			MessageID:      messageEntity.MessageId,
-			ParticipantsID: messageEntity.ParticipantsId,
-			ChatRoomID:     messageEntity.ChatRoomId,
-			Content:        messageEntity.Content,
+			MessageID:        messageEntity.MessageId,
+			FkParticipantsID: messageEntity.ParticipantsId,
+			FkChatRoomID:     messageEntity.ChatRoomId,
+			Content:          messageEntity.Content,
 		})
 		if err != nil {
 			log.Printf("error saving message: %v", err)
@@ -69,7 +69,10 @@ func (s *MessageHandler) CreateMessageWS(c echo.Context) error {
 		for conn := range s.wsConnections {
 			if err := conn.WriteJSON(messageEntity); err != nil {
 				log.Printf("error writing message to websocket: %v", err)
-				conn.Close()
+				err := conn.Close()
+				if err != nil {
+					return err
+				}
 				delete(s.wsConnections, conn)
 			}
 		}

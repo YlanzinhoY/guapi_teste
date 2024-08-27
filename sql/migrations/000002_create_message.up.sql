@@ -4,6 +4,6 @@ content text NOT NULL,
 created_at timestamp NOT NULL DEFAULT now(),
 
 PRIMARY KEY(message_id),
-participants_id uuid REFERENCES participants(participants_id) ON DELETE CASCADE,
-chat_room_id uuid REFERENCES chat_room(chat_room_id) ON DELETE CASCADE
+fk_participants_id uuid REFERENCES participants(participants_id) ON DELETE CASCADE,
+fk_chat_room_id uuid REFERENCES chat_room(chat_room_id) ON DELETE RESTRICT
 );

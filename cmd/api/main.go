@@ -24,12 +24,12 @@ func main() {
 
 	chatRoomHandler := handler.NewChatRoomHandler(r.DbHandler())
 	e.POST("/v1/chatroom", chatRoomHandler.CreateChatRoom)
+	e.DELETE("/v1/chatroom/:id", chatRoomHandler.DeleteChatRoom)
 
 	participatnsHandler := handler.NewParticipantsHandler(r.DbHandler())
 	e.POST("/v1/participants", participatnsHandler.CreateParticipants)
 
 	messageHandler := handler.NewMessageHandler(r.DbHandler(), &ws, make(map[*websocket.Conn]bool))
-
 	e.GET("/ws/:chatRoomId/:participantId", messageHandler.CreateMessageWS)
 
 	e.Logger.Fatal(e.Start(":9001"))
