@@ -1,0 +1,17 @@
+version: "3"
+services:
+    postgres:
+        image: postgres:latest
+        container_name: postgres-container
+        ports:
+            - 5432:5432
+        environment:
+            POSTGRES_DB: guapi_teste
+            POSTGRES_PASSWORD: postgres
+            POSTGRES_USER: postgres
+        volumes:
+          - postgres_data:/var/lib/postgres
+
+
+volumes:
+  postgres_data:

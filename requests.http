@@ -1,0 +1,6 @@
+POST http://localhost:9001/v1/chatroom HTTP/1.1
+Content-Type: application/json
+
+{
+    "chat_room_name": 2
+}

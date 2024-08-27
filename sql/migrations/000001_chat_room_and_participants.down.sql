@@ -1,0 +1,2 @@
+DROP TABLE IF EXISTS participants;
+DROP TABLE IF EXISTS chat_room;
