@@ -29,39 +29,32 @@ func NewNotificationHandler(dbHandler *db.Queries, wsUpgrader *websocket.Upgrade
 func (s *NotificationHandler) SendNotification(c echo.Context) error {
 	chatRoomIdParam := uuid.MustParse(c.Param("chat_room_id"))
 
-	// Upgrade HTTP connection to WebSocket
 	ws, err := s.wsUpgrader.Upgrade(c.Response(), c.Request(), nil)
 	if err != nil {
 		return err
 	}
-
-	// Add WebSocket connection to the map
 	s.mu.Lock()
 	s.wsConnections[ws] = true
 	s.mu.Unlock()
 
 	defer func() {
-		// Remove WebSocket connection from the map and close the connection
 		s.mu.Lock()
 		delete(s.wsConnections, ws)
 		s.mu.Unlock()
 		ws.Close()
 	}()
 
-	// Get initial message count
 	initialMessageCount, err := s.dbHandler.CountMessageById(c.Request().Context(), chatRoomIdParam)
 	if err != nil {
 		return err
 	}
 
 	for {
-		// Get the current message count
 		messagesCount, err := s.dbHandler.CountMessageById(c.Request().Context(), chatRoomIdParam)
 		if err != nil {
 			return err
 		}
 
-		// Check if there are new messages
 		if messagesCount > initialMessageCount {
 			participants, err := s.dbHandler.FindAllParticipantsSubscribers(c.Request().Context(), chatRoomIdParam)
 			if err != nil {
@@ -75,7 +68,6 @@ func (s *NotificationHandler) SendNotification(c echo.Context) error {
 				"users":        participants,
 			}
 
-			// Send notification to all WebSocket connections
 			s.mu.Lock()
 			for conn := range s.wsConnections {
 				if err := conn.WriteJSON(notification); err != nil {
@@ -86,11 +78,9 @@ func (s *NotificationHandler) SendNotification(c echo.Context) error {
 			}
 			s.mu.Unlock()
 
-			// Update the initial message count
 			initialMessageCount = messagesCount
 		}
 
-		// Pause before the next check
 		time.Sleep(2 * time.Second)
 	}
 }
