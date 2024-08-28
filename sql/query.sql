@@ -63,3 +63,33 @@ SET like_message = like_message - 1
 WHERE message_id = $1
 AND like_message > 0
 RETURNING message_id, content, like_message ,created_at, fk_chat_room_id, fk_participants_id;
+
+/*
+ Subscribe
+ */
+
+-- name: CreateSubscribe :exec
+ INSERT INTO subscriber(
+    subscriber_id,
+    fk_participants_id,
+    fk_chat_room_id
+ ) VALUES($1, $2, $3)
+ ON CONFLICT (fk_participants_id, fk_chat_room_id) DO NOTHING
+ RETURNING subscriber_id, subscribed_at, fk_chat_room_id, fk_participants_id;
+
+
+ /*
+    notification
+ */
+
+-- name: CreateNotification :exec
+
+INSERT INTO notification(
+notification_id,
+fk_chat_room_id,
+fk_participant_id,
+ping,
+fk_message_id
+) VALUES(
+$1, $2, $3, $4, $5
+) RETURNING notification_id, fk_chat_room_id, fk_participant_id, ping, fk_message_id;

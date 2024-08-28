@@ -74,6 +74,42 @@ func (q *Queries) CreateMessage(ctx context.Context, arg CreateMessageParams) er
 	return err
 }
 
+const createNotification = `-- name: CreateNotification :exec
+/*
+    notification
+ */
+
+
+INSERT INTO notification(
+notification_id,
+fk_chat_room_id,
+fk_participant_id,
+ping,
+fk_message_id
+) VALUES(
+$1, $2, $3, $4, $5
+) RETURNING notification_id, fk_chat_room_id, fk_participant_id, ping, fk_message_id
+`
+
+type CreateNotificationParams struct {
+	NotificationID  uuid.UUID
+	FkChatRoomID    uuid.UUID
+	FkParticipantID uuid.UUID
+	Ping            int32
+	FkMessageID     uuid.UUID
+}
+
+func (q *Queries) CreateNotification(ctx context.Context, arg CreateNotificationParams) error {
+	_, err := q.db.ExecContext(ctx, createNotification,
+		arg.NotificationID,
+		arg.FkChatRoomID,
+		arg.FkParticipantID,
+		arg.Ping,
+		arg.FkMessageID,
+	)
+	return err
+}
+
 const createParticipants = `-- name: CreateParticipants :exec
 /*
     Participants
@@ -97,6 +133,31 @@ type CreateParticipantsParams struct {
 
 func (q *Queries) CreateParticipants(ctx context.Context, arg CreateParticipantsParams) error {
 	_, err := q.db.ExecContext(ctx, createParticipants, arg.ParticipantsID, arg.Name, arg.ChatRoomID)
+	return err
+}
+
+const createSubscribe = `-- name: CreateSubscribe :exec
+/*
+ Subscribe
+ */
+
+ INSERT INTO subscriber(
+    subscriber_id,
+    fk_participants_id,
+    fk_chat_room_id
+ ) VALUES($1, $2, $3)
+ ON CONFLICT (fk_participants_id, fk_chat_room_id) DO NOTHING
+ RETURNING subscriber_id, subscribed_at, fk_chat_room_id, fk_participants_id
+`
+
+type CreateSubscribeParams struct {
+	SubscriberID     uuid.UUID
+	FkParticipantsID uuid.UUID
+	FkChatRoomID     uuid.UUID
+}
+
+func (q *Queries) CreateSubscribe(ctx context.Context, arg CreateSubscribeParams) error {
+	_, err := q.db.ExecContext(ctx, createSubscribe, arg.SubscriberID, arg.FkParticipantsID, arg.FkChatRoomID)
 	return err
 }
 

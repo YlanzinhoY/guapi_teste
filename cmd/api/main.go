@@ -33,6 +33,12 @@ func main() {
 	e.GET("/ws/:chatRoomId/:participantId", messageHandler.CreateMessageWS)
 	e.PATCH("/v1/message/:messageId", messageHandler.LikeMessage)
 	e.DELETE("/v1/message/:messageId", messageHandler.RemoveLikeMessage)
-	e.Logger.Fatal(e.Start(":9001"))
 
+	subscribeHandler := handler.NewSubscribeHandler(r.DbHandler())
+	e.POST("/v1/subscribe/:chat_room_id/:participant_id", subscribeHandler.CreateSubscribeInChatRoom)
+
+	notificationHandler := handler.NewNotificationHandler(r.DbHandler(), &ws, make(map[*websocket.Conn]bool))
+	e.GET("/ws/notification", notificationHandler.SendNotification)
+
+	e.Logger.Fatal(e.Start(":9001"))
 }

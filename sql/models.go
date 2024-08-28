@@ -24,8 +24,25 @@ type Message struct {
 	LikeMessage      int32
 }
 
+type Notification struct {
+	NotificationID  uuid.UUID
+	CreatedAt       time.Time
+	Ping            int32
+	IsRead          bool
+	FkParticipantID uuid.UUID
+	FkChatRoomID    uuid.UUID
+	FkMessageID     uuid.UUID
+}
+
 type Participant struct {
 	ParticipantsID uuid.UUID
 	Name           string
 	ChatRoomID     uuid.UUID
+}
+
+type Subscriber struct {
+	SubscriberID     uuid.UUID
+	SubscribedAt     time.Time
+	FkParticipantsID uuid.UUID
+	FkChatRoomID     uuid.UUID
 }
