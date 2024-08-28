@@ -41,10 +41,25 @@ INSERT INTO message(
 message_id,
 fk_participants_id,
 fk_chat_room_id,
-content
+content,
+like_message
 ) VALUES(
     $1,
     $2,
     $3,
-    $4
-) RETURNING message_id, content, created_at, fk_chat_room_id, fk_participants_id;
+    $4,
+    $5
+) RETURNING message_id, content, like_message ,created_at, fk_chat_room_id, fk_participants_id;
+
+-- name: PatchLikeMessage :one
+UPDATE message
+    set like_message = $2
+WHERE message_id = $1
+RETURNING message_id, content, like_message ,created_at, fk_chat_room_id, fk_participants_id;
+
+-- name: DeleteLike :one
+UPDATE message
+SET like_message = like_message - 1
+WHERE message_id = $1
+AND like_message > 0
+RETURNING message_id, content, like_message ,created_at, fk_chat_room_id, fk_participants_id;

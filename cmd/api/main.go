@@ -31,7 +31,8 @@ func main() {
 
 	messageHandler := handler.NewMessageHandler(r.DbHandler(), &ws, make(map[*websocket.Conn]bool))
 	e.GET("/ws/:chatRoomId/:participantId", messageHandler.CreateMessageWS)
-
+	e.PATCH("/v1/message/:messageId", messageHandler.LikeMessage)
+	e.DELETE("/v1/message/:messageId", messageHandler.RemoveLikeMessage)
 	e.Logger.Fatal(e.Start(":9001"))
 
 }

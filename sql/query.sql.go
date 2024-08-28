@@ -7,6 +7,7 @@ package sql
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -43,13 +44,15 @@ INSERT INTO message(
 message_id,
 fk_participants_id,
 fk_chat_room_id,
-content
+content,
+like_message
 ) VALUES(
     $1,
     $2,
     $3,
-    $4
-) RETURNING message_id, content, created_at, fk_chat_room_id, fk_participants_id
+    $4,
+    $5
+) RETURNING message_id, content, like_message ,created_at, fk_chat_room_id, fk_participants_id
 `
 
 type CreateMessageParams struct {
@@ -57,6 +60,7 @@ type CreateMessageParams struct {
 	FkParticipantsID uuid.UUID
 	FkChatRoomID     uuid.UUID
 	Content          string
+	LikeMessage      int32
 }
 
 func (q *Queries) CreateMessage(ctx context.Context, arg CreateMessageParams) error {
@@ -65,6 +69,7 @@ func (q *Queries) CreateMessage(ctx context.Context, arg CreateMessageParams) er
 		arg.FkParticipantsID,
 		arg.FkChatRoomID,
 		arg.Content,
+		arg.LikeMessage,
 	)
 	return err
 }
@@ -108,5 +113,71 @@ func (q *Queries) DeleteChatRoom(ctx context.Context, chatRoomID uuid.UUID) (Cha
 	row := q.db.QueryRowContext(ctx, deleteChatRoom, chatRoomID)
 	var i ChatRoom
 	err := row.Scan(&i.ChatRoomID, &i.ChatRoomName)
+	return i, err
+}
+
+const deleteLike = `-- name: DeleteLike :one
+UPDATE message
+SET like_message = like_message - 1
+WHERE message_id = $1
+AND like_message > 0
+RETURNING message_id, content, like_message ,created_at, fk_chat_room_id, fk_participants_id
+`
+
+type DeleteLikeRow struct {
+	MessageID        uuid.UUID
+	Content          string
+	LikeMessage      int32
+	CreatedAt        time.Time
+	FkChatRoomID     uuid.UUID
+	FkParticipantsID uuid.UUID
+}
+
+func (q *Queries) DeleteLike(ctx context.Context, messageID uuid.UUID) (DeleteLikeRow, error) {
+	row := q.db.QueryRowContext(ctx, deleteLike, messageID)
+	var i DeleteLikeRow
+	err := row.Scan(
+		&i.MessageID,
+		&i.Content,
+		&i.LikeMessage,
+		&i.CreatedAt,
+		&i.FkChatRoomID,
+		&i.FkParticipantsID,
+	)
+	return i, err
+}
+
+const patchLikeMessage = `-- name: PatchLikeMessage :one
+UPDATE message
+    set like_message = $2
+WHERE message_id = $1
+RETURNING message_id, content, like_message ,created_at, fk_chat_room_id, fk_participants_id
+`
+
+type PatchLikeMessageParams struct {
+	MessageID   uuid.UUID
+	LikeMessage int32
+}
+
+type PatchLikeMessageRow struct {
+	MessageID        uuid.UUID
+	Content          string
+	LikeMessage      int32
+	CreatedAt        time.Time
+	FkChatRoomID     uuid.UUID
+	FkParticipantsID uuid.UUID
+}
+
+func (q *Queries) PatchLikeMessage(ctx context.Context, arg PatchLikeMessageParams) (PatchLikeMessageRow, error) {
+	row := q.db.QueryRowContext(ctx, patchLikeMessage, arg.MessageID, arg.LikeMessage)
+	var i PatchLikeMessageRow
+	err := row.Scan(
+		&i.MessageID,
+		&i.Content,
+		&i.LikeMessage,
+		&i.CreatedAt,
+		&i.FkChatRoomID,
+		&i.FkParticipantsID,
+	)
 	return i, err
 }

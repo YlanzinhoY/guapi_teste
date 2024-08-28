@@ -1,0 +1,2 @@
+ALTER TABLE IF EXISTS message
+ADD COLUMN like_message int NOT NULL DEFAULT 0;

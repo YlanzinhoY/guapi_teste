@@ -21,6 +21,7 @@ type Message struct {
 	CreatedAt        time.Time
 	FkParticipantsID uuid.UUID
 	FkChatRoomID     uuid.UUID
+	LikeMessage      int32
 }
 
 type Participant struct {

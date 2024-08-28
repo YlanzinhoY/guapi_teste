@@ -12,4 +12,5 @@ type MessageEntity struct {
 	ParticipantsId uuid.UUID `json:"participant_id"`
 	ChatRoomId     uuid.UUID `json:"chat_room_id"`
 	CreatedAt      time.Time `json:"created_at"`
+	LikeMessage    int32     `json:"like_message"`
 }

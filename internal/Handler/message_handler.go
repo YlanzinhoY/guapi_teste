@@ -60,6 +60,7 @@ func (s *MessageHandler) CreateMessageWS(c echo.Context) error {
 			FkParticipantsID: messageEntity.ParticipantsId,
 			FkChatRoomID:     messageEntity.ChatRoomId,
 			Content:          messageEntity.Content,
+			LikeMessage:      messageEntity.LikeMessage,
 		})
 		if err != nil {
 			log.Printf("error saving message: %v", err)
@@ -79,4 +80,76 @@ func (s *MessageHandler) CreateMessageWS(c echo.Context) error {
 	}
 
 	return nil
+}
+
+func (s *MessageHandler) LikeMessage(c echo.Context) error {
+	messageId, err := uuid.Parse(c.Param("messageId"))
+
+	if err != nil {
+		c.Logger().Fatal(err)
+		return err
+	}
+
+	var messageEntity entity.MessageEntity
+
+	messageEntity.MessageId = messageId
+
+	if err := c.Bind(&messageEntity); err != nil {
+		return c.JSON(500, map[string]string{
+			"error": err.Error(),
+		})
+	}
+
+	msg, err := s.dbHandler.PatchLikeMessage(c.Request().Context(), db.PatchLikeMessageParams{
+		MessageID:   messageEntity.MessageId,
+		LikeMessage: messageEntity.LikeMessage,
+	})
+
+	if err != nil {
+		return c.JSON(500, map[string]string{
+			"error": err.Error(),
+		})
+	}
+
+	messageEntity = entity.MessageEntity{
+		MessageId:      msg.MessageID,
+		LikeMessage:    msg.LikeMessage,
+		Content:        msg.Content,
+		ParticipantsId: msg.FkParticipantsID,
+		ChatRoomId:     msg.FkChatRoomID,
+		CreatedAt:      msg.CreatedAt,
+	}
+
+	return c.JSON(200, messageEntity)
+
+}
+
+func (s *MessageHandler) RemoveLikeMessage(c echo.Context) error {
+	messageId, err := uuid.Parse(c.Param("messageId"))
+
+	if err != nil {
+		c.Logger().Fatal(err)
+		return err
+	}
+
+	var messageEntity entity.MessageEntity
+
+	messageEntity.MessageId = messageId
+
+	if err := c.Bind(&messageEntity); err != nil {
+		return c.JSON(500, map[string]string{
+			"error": err.Error(),
+		})
+	}
+
+	res, err := s.dbHandler.DeleteLike(c.Request().Context(), messageId)
+
+	if err != nil {
+		return c.JSON(500, map[string]string{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(200, res)
+
 }
