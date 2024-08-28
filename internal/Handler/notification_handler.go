@@ -4,6 +4,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
+	"github.com/ylanzinhoy/guapi_teste/internal/entity"
 	db "github.com/ylanzinhoy/guapi_teste/sql"
 	"log"
 	"sync"
@@ -48,6 +49,7 @@ func (s *NotificationHandler) SendNotificationLikeUnLikeMessage(c echo.Context) 
 	if err != nil {
 		return err
 	}
+	var participantEntity entity.ParticipantsEntity
 
 	for {
 
@@ -56,39 +58,43 @@ func (s *NotificationHandler) SendNotificationLikeUnLikeMessage(c echo.Context) 
 			return err
 		}
 
+		for _, participant := range participantsSubs {
+			participantEntity.Name = participant.Name
+			participantEntity.Id = participant.ParticipantsID
+			participantEntity.Name = participant.Name
+			participantEntity.ChatRoomId = chatRoomIdParam
+		}
+
 		currentLikes, err := s.dbHandler.GetMessagesLikesByChatId(c.Request().Context(), chatRoomIdParam)
 		if err != nil {
 			return err
 		}
 		for messageID, currentLikeCount := range currentLikes {
-			for _, participant := range participantsSubs {
-				if currentLikeCount.LikeMessage > initialLikes[messageID].LikeMessage {
-					notification := map[string]interface{}{
-						"notification":            "message Like",
-						"participant_subscribers": participantsSubs,
-						"chat_room_id":            chatRoomIdParam,
-						"message_id":              currentLikeCount.MessageID,
-						"like_message":            currentLikeCount.LikeMessage,
-						"participant_name":        participant.Name,
-					}
-					s.broadcastNotification(notification)
 
-					initialLikes[messageID] = currentLikeCount
-				} else if currentLikeCount.LikeMessage < initialLikes[messageID].LikeMessage {
-					notification := map[string]interface{}{
-						"notification":            "Deslike Message",
-						"participant_subscribers": participantsSubs,
-						"chat_room_id":            chatRoomIdParam,
-						"message_id":              currentLikeCount.MessageID,
-						"like_message":            currentLikeCount.LikeMessage,
-					}
-
-					s.broadcastNotification(notification)
-
-					initialLikes[messageID] = currentLikeCount
+			if currentLikeCount.LikeMessage > initialLikes[messageID].LikeMessage {
+				notification := map[string]interface{}{
+					"notification":            "Like Message",
+					"participant_subscribers": participantEntity,
+					"chat_room_id":            chatRoomIdParam,
+					"message_id":              currentLikeCount.MessageID,
+					"like_message":            currentLikeCount.LikeMessage,
 				}
-			}
+				s.broadcastNotification(notification)
 
+				initialLikes[messageID] = currentLikeCount
+			} else if currentLikeCount.LikeMessage < initialLikes[messageID].LikeMessage {
+				notification := map[string]interface{}{
+					"notification":            "Deslike Message",
+					"participant_subscribers": participantEntity,
+					"chat_room_id":            chatRoomIdParam,
+					"message_id":              currentLikeCount.MessageID,
+					"like_message":            currentLikeCount.LikeMessage,
+				}
+
+				s.broadcastNotification(notification)
+
+				initialLikes[messageID] = currentLikeCount
+			}
 		}
 
 		time.Sleep(1 * time.Second)
