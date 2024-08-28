@@ -101,8 +101,9 @@ WHERE
     s.fk_chat_room_id = $2;
 
 
+
 /*
- Query Master
+ Notification queries
  */
 
 -- name: FindAllParticipantsSubscribers :many
@@ -111,5 +112,14 @@ WHERE
 
 -- name: CountMessageById :one
 SELECT COUNT(*) AS message_count
+FROM message
+WHERE fk_chat_room_id = $1;
+
+-- -- name: CountMessageLikes :one
+-- SELECT like_message from message
+-- where message_id = $1;
+
+-- name: GetMessagesLikesByChatId :many
+SELECT message_id, like_message
 FROM message
 WHERE fk_chat_room_id = $1;

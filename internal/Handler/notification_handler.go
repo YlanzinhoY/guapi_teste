@@ -26,7 +26,76 @@ func NewNotificationHandler(dbHandler *db.Queries, wsUpgrader *websocket.Upgrade
 	}
 }
 
-func (s *NotificationHandler) SendNotification(c echo.Context) error {
+func (s *NotificationHandler) SendNotificationLikeUnLikeMessage(c echo.Context) error {
+	chatRoomIdParam := uuid.MustParse(c.Param("chat_room_id"))
+
+	ws, err := s.wsUpgrader.Upgrade(c.Response(), c.Request(), nil)
+	if err != nil {
+		return err
+	}
+	s.mu.Lock()
+	s.wsConnections[ws] = true
+	s.mu.Unlock()
+
+	defer func() {
+		s.mu.Lock()
+		delete(s.wsConnections, ws)
+		s.mu.Unlock()
+		ws.Close()
+	}()
+
+	initialLikes, err := s.dbHandler.GetMessagesLikesByChatId(c.Request().Context(), chatRoomIdParam)
+	if err != nil {
+		return err
+	}
+
+	for {
+
+		participantsSubs, err := s.dbHandler.FindAllParticipantsSubscribers(c.Request().Context(), chatRoomIdParam)
+		if err != nil {
+			return err
+		}
+
+		currentLikes, err := s.dbHandler.GetMessagesLikesByChatId(c.Request().Context(), chatRoomIdParam)
+		if err != nil {
+			return err
+		}
+		for messageID, currentLikeCount := range currentLikes {
+			for _, participant := range participantsSubs {
+				if currentLikeCount.LikeMessage > initialLikes[messageID].LikeMessage {
+					notification := map[string]interface{}{
+						"notification":            "message Like",
+						"participant_subscribers": participantsSubs,
+						"chat_room_id":            chatRoomIdParam,
+						"message_id":              currentLikeCount.MessageID,
+						"like_message":            currentLikeCount.LikeMessage,
+						"participant_name":        participant.Name,
+					}
+					s.broadcastNotification(notification)
+
+					initialLikes[messageID] = currentLikeCount
+				} else if currentLikeCount.LikeMessage < initialLikes[messageID].LikeMessage {
+					notification := map[string]interface{}{
+						"notification":            "Deslike Message",
+						"participant_subscribers": participantsSubs,
+						"chat_room_id":            chatRoomIdParam,
+						"message_id":              currentLikeCount.MessageID,
+						"like_message":            currentLikeCount.LikeMessage,
+					}
+
+					s.broadcastNotification(notification)
+
+					initialLikes[messageID] = currentLikeCount
+				}
+			}
+
+		}
+
+		time.Sleep(1 * time.Second)
+	}
+}
+
+func (s *NotificationHandler) SendNotificationMessage(c echo.Context) error {
 	chatRoomIdParam := uuid.MustParse(c.Param("chat_room_id"))
 
 	ws, err := s.wsUpgrader.Upgrade(c.Response(), c.Request(), nil)
@@ -61,7 +130,6 @@ func (s *NotificationHandler) SendNotification(c echo.Context) error {
 				return err
 			}
 
-			// Prepare notification payload
 			notification := map[string]interface{}{
 				"notification": "New messages available",
 				"count":        messagesCount,
@@ -82,5 +150,18 @@ func (s *NotificationHandler) SendNotification(c echo.Context) error {
 		}
 
 		time.Sleep(2 * time.Second)
+	}
+}
+
+func (s *NotificationHandler) broadcastNotification(notification map[string]interface{}) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	for conn := range s.wsConnections {
+		if err := conn.WriteJSON(notification); err != nil {
+			log.Printf("error writing notification to websocket: %v", err)
+			conn.Close()
+			delete(s.wsConnections, conn)
+		}
 	}
 }

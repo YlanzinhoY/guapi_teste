@@ -223,7 +223,7 @@ func (q *Queries) DeleteLike(ctx context.Context, messageID uuid.UUID) (DeleteLi
 
 const findAllParticipantsSubscribers = `-- name: FindAllParticipantsSubscribers :many
 /*
- Query Master
+ Notification queries
  */
 
  SELECT participants_id, name, is_subscribe, chat_room_id FROM participants
@@ -245,6 +245,44 @@ func (q *Queries) FindAllParticipantsSubscribers(ctx context.Context, chatRoomID
 			&i.IsSubscribe,
 			&i.ChatRoomID,
 		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getMessagesLikesByChatId = `-- name: GetMessagesLikesByChatId :many
+
+SELECT message_id, like_message
+FROM message
+WHERE fk_chat_room_id = $1
+`
+
+type GetMessagesLikesByChatIdRow struct {
+	MessageID   uuid.UUID
+	LikeMessage int32
+}
+
+// -- name: CountMessageLikes :one
+// SELECT like_message from message
+// where message_id = $1;
+func (q *Queries) GetMessagesLikesByChatId(ctx context.Context, fkChatRoomID uuid.UUID) ([]GetMessagesLikesByChatIdRow, error) {
+	rows, err := q.db.QueryContext(ctx, getMessagesLikesByChatId, fkChatRoomID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetMessagesLikesByChatIdRow
+	for rows.Next() {
+		var i GetMessagesLikesByChatIdRow
+		if err := rows.Scan(&i.MessageID, &i.LikeMessage); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

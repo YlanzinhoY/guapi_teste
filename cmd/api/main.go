@@ -61,7 +61,8 @@ func main() {
 
 	notificationHandler := handler.NewNotificationHandler(r.DbHandler(), &ws, make(map[*websocket.Conn]bool))
 
-	e.GET("/ws/notifier/:chat_room_id", notificationHandler.SendNotification)
+	e.GET("/ws/notifier/message/:chat_room_id", notificationHandler.SendNotificationMessage)
+	e.GET("/ws/notifier/likesUnlike/:chat_room_id", notificationHandler.SendNotificationLikeUnLikeMessage)
 
 	e.Logger.Fatal(e.Start(":9001"))
 }
