@@ -1,11 +1,10 @@
 package main
 
 import (
-	"net/http"
-
 	"github.com/gorilla/websocket"
 	handler "github.com/ylanzinhoy/guapi_teste/internal/Handler"
 	"github.com/ylanzinhoy/guapi_teste/internal/repository"
+	"net/http"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -36,16 +35,14 @@ func main() {
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
-	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		Skipper:      middleware.DefaultSkipper,
-		AllowOrigins: []string{"*"},
-		AllowMethods: []string{http.MethodGet, http.MethodHead, http.MethodPut, http.MethodPatch, http.MethodPost, http.MethodDelete},
-	}))
 
 	e.GET("/swagger/*", echoSwagger.WrapHandler)
 
 	r := repository.NewDatabaseRepository("host=localhost port=5432 user=postgres password=postgres dbname=guapi_teste sslmode=disable")
 	defer r.DatabaseConn()
+	ws.CheckOrigin = func(r *http.Request) bool {
+		return true
+	}
 
 	chatRoomHandler := handler.NewChatRoomHandler(r.DbHandler())
 	e.POST("/v1/chatroom", chatRoomHandler.CreateChatRoom)
@@ -64,7 +61,7 @@ func main() {
 
 	notificationHandler := handler.NewNotificationHandler(r.DbHandler(), &ws, make(map[*websocket.Conn]bool))
 
-	e.GET("/ws/notification/:chat_room_id", notificationHandler.SendNotification)
+	e.GET("/ws/notifier/:chat_room_id", notificationHandler.SendNotification)
 
 	e.Logger.Fatal(e.Start(":9001"))
 }

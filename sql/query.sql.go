@@ -12,6 +12,19 @@ import (
 	"github.com/google/uuid"
 )
 
+const countMessageById = `-- name: CountMessageById :one
+SELECT COUNT(*) AS message_count
+FROM message
+WHERE fk_chat_room_id = $1
+`
+
+func (q *Queries) CountMessageById(ctx context.Context, fkChatRoomID uuid.UUID) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countMessageById, fkChatRoomID)
+	var message_count int64
+	err := row.Scan(&message_count)
+	return message_count, err
+}
+
 const createChatRoom = `-- name: CreateChatRoom :exec
 /*
 Chat Room
@@ -108,22 +121,30 @@ const createParticipants = `-- name: CreateParticipants :exec
 INSERT INTO participants(
 participants_id,
 name,
-chat_room_id
+chat_room_id,
+is_subscribe
 ) VALUES (
 $1,
 $2,
-$3
-) RETURNING participants_id, name, chat_room_id
+$3,
+$4
+) RETURNING participants_id, name, chat_room_id, is_subscribe
 `
 
 type CreateParticipantsParams struct {
 	ParticipantsID uuid.UUID
 	Name           string
 	ChatRoomID     uuid.UUID
+	IsSubscribe    bool
 }
 
 func (q *Queries) CreateParticipants(ctx context.Context, arg CreateParticipantsParams) error {
-	_, err := q.db.ExecContext(ctx, createParticipants, arg.ParticipantsID, arg.Name, arg.ChatRoomID)
+	_, err := q.db.ExecContext(ctx, createParticipants,
+		arg.ParticipantsID,
+		arg.Name,
+		arg.ChatRoomID,
+		arg.IsSubscribe,
+	)
 	return err
 }
 
@@ -131,6 +152,7 @@ const createSubscribe = `-- name: CreateSubscribe :exec
 /*
  Subscribe
  */
+
 
  INSERT INTO subscriber(
     subscriber_id,
@@ -199,6 +221,43 @@ func (q *Queries) DeleteLike(ctx context.Context, messageID uuid.UUID) (DeleteLi
 	return i, err
 }
 
+const findAllParticipantsSubscribers = `-- name: FindAllParticipantsSubscribers :many
+/*
+ Query Master
+ */
+
+ SELECT participants_id, name, is_subscribe, chat_room_id FROM participants
+ where is_subscribe = true AND chat_room_id = $1
+`
+
+func (q *Queries) FindAllParticipantsSubscribers(ctx context.Context, chatRoomID uuid.UUID) ([]Participant, error) {
+	rows, err := q.db.QueryContext(ctx, findAllParticipantsSubscribers, chatRoomID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Participant
+	for rows.Next() {
+		var i Participant
+		if err := rows.Scan(
+			&i.ParticipantsID,
+			&i.Name,
+			&i.IsSubscribe,
+			&i.ChatRoomID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const patchLikeMessage = `-- name: PatchLikeMessage :one
 UPDATE message
     set like_message = $2
@@ -232,4 +291,15 @@ func (q *Queries) PatchLikeMessage(ctx context.Context, arg PatchLikeMessagePara
 		&i.FkParticipantsID,
 	)
 	return i, err
+}
+
+const updateParticipantSubscription = `-- name: UpdateParticipantSubscription :exec
+UPDATE participants
+    set is_subscribe = true
+WHERE participants_id = $1
+`
+
+func (q *Queries) UpdateParticipantSubscription(ctx context.Context, participantsID uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, updateParticipantSubscription, participantsID)
+	return err
 }

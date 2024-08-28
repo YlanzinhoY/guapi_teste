@@ -35,6 +35,7 @@ type Notification struct {
 type Participant struct {
 	ParticipantsID uuid.UUID
 	Name           string
+	IsSubscribe    bool
 	ChatRoomID     uuid.UUID
 }
 

@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	_ "github.com/lib/pq"
 	"github.com/ylanzinhoy/guapi_teste/internal/entity"
 	db "github.com/ylanzinhoy/guapi_teste/sql"
 )
@@ -36,7 +37,13 @@ func (s *SubscribeHandler) CreateSubscribeInChatRoom(c echo.Context) error {
 	})
 
 	if err != nil {
-		return c.JSON(400, err.Error())
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	err = s.dbHandler.UpdateParticipantSubscription(c.Request().Context(), subscribeEntity.FkParticipantsID)
+
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	return c.JSON(http.StatusCreated, subscribeEntity)

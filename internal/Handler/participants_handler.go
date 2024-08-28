@@ -29,11 +29,13 @@ func (s *ParticipantsHandler) CreateParticipants(c echo.Context) error {
 	}
 
 	participantsEntity.Id = uuid.New()
+	participantsEntity.IsSubscribe = false
 
 	err := s.dbHandler.CreateParticipants(c.Request().Context(), db.CreateParticipantsParams{
 		ParticipantsID: participantsEntity.Id,
 		Name:           participantsEntity.Name,
 		ChatRoomID:     participantsEntity.ChatRoomId,
+		IsSubscribe:    participantsEntity.IsSubscribe,
 	})
 
 	if err != nil {

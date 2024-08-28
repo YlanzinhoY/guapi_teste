@@ -26,12 +26,14 @@ RETURNING *;
 INSERT INTO participants(
 participants_id,
 name,
-chat_room_id
+chat_room_id,
+is_subscribe
 ) VALUES (
 $1,
 $2,
-$3
-) RETURNING participants_id, name, chat_room_id;
+$3,
+$4
+) RETURNING participants_id, name, chat_room_id, is_subscribe;
 
 /*
  Messages
@@ -69,6 +71,7 @@ RETURNING message_id, content, like_message ,created_at, fk_chat_room_id, fk_par
  */
 
 -- name: CreateSubscribe :exec
+
  INSERT INTO subscriber(
     subscriber_id,
     fk_participants_id,
@@ -77,6 +80,10 @@ RETURNING message_id, content, like_message ,created_at, fk_chat_room_id, fk_par
  ON CONFLICT (fk_participants_id, fk_chat_room_id) DO NOTHING
  RETURNING subscriber_id, subscribed_at, fk_chat_room_id, fk_participants_id;
 
+-- name: UpdateParticipantSubscription :exec
+UPDATE participants
+    set is_subscribe = true
+WHERE participants_id = $1;
 
  /*
     notification
@@ -92,3 +99,17 @@ FROM
     subscriber AS s
 WHERE
     s.fk_chat_room_id = $2;
+
+
+/*
+ Query Master
+ */
+
+-- name: FindAllParticipantsSubscribers :many
+ SELECT * FROM participants
+ where is_subscribe = true AND chat_room_id = $1;
+
+-- name: CountMessageById :one
+SELECT COUNT(*) AS message_count
+FROM message
+WHERE fk_chat_room_id = $1;
