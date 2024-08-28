@@ -22,25 +22,14 @@ func (s *SubscribeHandler) CreateSubscribeInChatRoom(c echo.Context) error {
 
 	var subscribeEntity entity.SubscribeEntity
 
-	participantId, err := uuid.Parse(c.Param("participant_id"))
-	if err != nil {
-		c.JSON(404, err.Error())
-	}
-	chatRoomId, err := uuid.Parse(c.Param("chat_room_id"))
-	if err != nil {
-		c.JSON(404, err.Error())
-	}
-
 	if err := c.Bind(&subscribeEntity); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
 	subscribeEntity.SubscriberID = uuid.New()
 	subscribeEntity.SubscribedAt = time.Now()
-	subscribeEntity.FkChatRoomID = chatRoomId
-	subscribeEntity.FkParticipantsID = participantId
 
-	err = s.dbHandler.CreateSubscribe(c.Request().Context(), db.CreateSubscribeParams{
+	err := s.dbHandler.CreateSubscribe(c.Request().Context(), db.CreateSubscribeParams{
 		SubscriberID:     subscribeEntity.SubscriberID,
 		FkChatRoomID:     subscribeEntity.FkChatRoomID,
 		FkParticipantsID: subscribeEntity.FkParticipantsID,

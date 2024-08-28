@@ -82,14 +82,13 @@ RETURNING message_id, content, like_message ,created_at, fk_chat_room_id, fk_par
     notification
  */
 
--- name: CreateNotification :exec
-
-INSERT INTO notification(
-notification_id,
-fk_chat_room_id,
-fk_participant_id,
-ping,
-fk_message_id
-) VALUES(
-$1, $2, $3, $4, $5
-) RETURNING notification_id, fk_chat_room_id, fk_participant_id, ping, fk_message_id;
+-- name: CreateNotificationForSubscribers :exec
+INSERT INTO notification (message, fk_chat_room_id, fk_message_id)
+SELECT
+    $1,  -- Tipo de notificação (e.g., 'new_message', 'like', 'unlike')
+    $2,  -- ID da sala de chat (fk_chat_room_id)
+    $3  -- ID da mensagem associada (fk_message_id)
+FROM
+    subscriber AS s
+WHERE
+    s.fk_chat_room_id = $2;

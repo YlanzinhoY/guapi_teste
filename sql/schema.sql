@@ -30,15 +30,12 @@ ADD COLUMN like_message int NOT NULL DEFAULT 0;
 CREATE TABLE notification(
 notification_id uuid NOT NULL DEFAULT uuid_generate_v4(),
 created_at timestamp NOT NULL DEFAULT now(),
-ping INT DEFAULT 0 NOT NULL,
-is_read boolean NOT NULL DEFAULT false,
+message varchar(100) NOT NULL,
 
 PRIMARY KEY(notification_id),
-fk_participant_id uuid NOT NULL REFERENCES participants(participants_id) ON DELETE CASCADE,
-fk_chat_room_id uuid NOT NULL REFERENCES chat_room(chat_room_id) ON DELETE CASCADE,
-fk_message_id uuid NOT NULL REFERENCES message(message_id) ON DELETE CASCADE
+    fk_chat_room_id uuid NOT NULL REFERENCES chat_room(chat_room_id) ON DELETE CASCADE,
+    fk_message_id uuid NOT NULL REFERENCES message(message_id) ON DELETE CASCADE
 );
-
 CREATE TABLE subscriber(
 subscriber_id uuid NOT NULL DEFAULT uuid_generate_v4(),
 subscribed_at timestamp NOT NULL DEFAULT now(),

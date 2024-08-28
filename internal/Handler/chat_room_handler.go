@@ -9,6 +9,10 @@ import (
 	db "github.com/ylanzinhoy/guapi_teste/sql"
 )
 
+type Error struct {
+	Message string `json:"message"`
+}
+
 type ChatRoomHandler struct {
 	dbHandler *db.Queries
 }
@@ -20,6 +24,16 @@ func NewChatRoomHandler(dbHandler *db.Queries) *ChatRoomHandler {
 	}
 }
 
+// ShowAccount godoc
+// @Summary      Create Chat room
+// @Description  Create Chat room
+// @Tags         createRoom
+// @Accept       json
+// @Produce      json
+// @Param        request body entity.ChatRoomEntity true "user request"
+// @Success      201 
+// @Failure      500  {object}  Error
+// @Router       /v1/chatroom [post]
 func (s *ChatRoomHandler) CreateChatRoom(c echo.Context) error {
 
 	var chatRoomEntity *entity.ChatRoomEntity

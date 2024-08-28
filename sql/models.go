@@ -25,13 +25,11 @@ type Message struct {
 }
 
 type Notification struct {
-	NotificationID  uuid.UUID
-	CreatedAt       time.Time
-	Ping            int32
-	IsRead          bool
-	FkParticipantID uuid.UUID
-	FkChatRoomID    uuid.UUID
-	FkMessageID     uuid.UUID
+	NotificationID uuid.UUID
+	CreatedAt      time.Time
+	Message        string
+	FkChatRoomID   uuid.UUID
+	FkMessageID    uuid.UUID
 }
 
 type Participant struct {

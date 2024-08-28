@@ -74,39 +74,30 @@ func (q *Queries) CreateMessage(ctx context.Context, arg CreateMessageParams) er
 	return err
 }
 
-const createNotification = `-- name: CreateNotification :exec
+const createNotificationForSubscribers = `-- name: CreateNotificationForSubscribers :exec
 /*
     notification
  */
 
-
-INSERT INTO notification(
-notification_id,
-fk_chat_room_id,
-fk_participant_id,
-ping,
-fk_message_id
-) VALUES(
-$1, $2, $3, $4, $5
-) RETURNING notification_id, fk_chat_room_id, fk_participant_id, ping, fk_message_id
+INSERT INTO notification (message, fk_chat_room_id, fk_message_id)
+SELECT
+    $1,  -- Tipo de notificação (e.g., 'new_message', 'like', 'unlike')
+    $2,  -- ID da sala de chat (fk_chat_room_id)
+    $3  -- ID da mensagem associada (fk_message_id)
+FROM
+    subscriber AS s
+WHERE
+    s.fk_chat_room_id = $2
 `
 
-type CreateNotificationParams struct {
-	NotificationID  uuid.UUID
-	FkChatRoomID    uuid.UUID
-	FkParticipantID uuid.UUID
-	Ping            int32
-	FkMessageID     uuid.UUID
+type CreateNotificationForSubscribersParams struct {
+	Message      string
+	FkChatRoomID uuid.UUID
+	FkMessageID  uuid.UUID
 }
 
-func (q *Queries) CreateNotification(ctx context.Context, arg CreateNotificationParams) error {
-	_, err := q.db.ExecContext(ctx, createNotification,
-		arg.NotificationID,
-		arg.FkChatRoomID,
-		arg.FkParticipantID,
-		arg.Ping,
-		arg.FkMessageID,
-	)
+func (q *Queries) CreateNotificationForSubscribers(ctx context.Context, arg CreateNotificationForSubscribersParams) error {
+	_, err := q.db.ExecContext(ctx, createNotificationForSubscribers, arg.Message, arg.FkChatRoomID, arg.FkMessageID)
 	return err
 }
 
