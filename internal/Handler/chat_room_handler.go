@@ -17,13 +17,13 @@ type requestBodySwagger struct {
 }
 
 type ChatRoomHandler struct {
-	dbHandler *db.Queries
+	DbHandler *db.Queries
 }
 
 func NewChatRoomHandler(dbHandler *db.Queries) *ChatRoomHandler {
 
 	return &ChatRoomHandler{
-		dbHandler: dbHandler,
+		DbHandler: dbHandler,
 	}
 }
 
@@ -49,7 +49,7 @@ func (s *ChatRoomHandler) CreateChatRoom(c echo.Context) error {
 
 	chatRoomEntity.Id = uuid.New()
 
-	err := s.dbHandler.CreateChatRoom(c.Request().Context(), db.CreateChatRoomParams{
+	err := s.DbHandler.CreateChatRoom(c.Request().Context(), db.CreateChatRoomParams{
 		ChatRoomID:   chatRoomEntity.Id,
 		ChatRoomName: chatRoomEntity.Name,
 	})
@@ -75,7 +75,7 @@ func (s *ChatRoomHandler) CreateChatRoom(c echo.Context) error {
 // @Router       /v1/chatroom/{id} [delete]
 func (s *ChatRoomHandler) DeleteChatRoom(c echo.Context) error {
 	idParam := uuid.MustParse(c.Param("id"))
-	res, err := s.dbHandler.DeleteChatRoom(c.Request().Context(), idParam)
+	res, err := s.DbHandler.DeleteChatRoom(c.Request().Context(), idParam)
 
 	if err != nil {
 		return c.JSON(404, map[string]string{

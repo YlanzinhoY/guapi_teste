@@ -87,21 +87,6 @@ UPDATE participants
     set is_subscribe = true
 WHERE participants_id = $1;
 
- /*
-    notification
- */
-
--- name: CreateNotificationForSubscribers :exec
-INSERT INTO notification (message, fk_chat_room_id, fk_message_id)
-SELECT
-    $1,  -- Tipo de notificação (e.g., 'new_message', 'like', 'unlike')
-    $2,  -- ID da sala de chat (fk_chat_room_id)
-    $3  -- ID da mensagem associada (fk_message_id)
-FROM
-    subscriber AS s
-WHERE
-    s.fk_chat_room_id = $2;
-
 
 
 /*

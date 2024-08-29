@@ -87,33 +87,6 @@ func (q *Queries) CreateMessage(ctx context.Context, arg CreateMessageParams) er
 	return err
 }
 
-const createNotificationForSubscribers = `-- name: CreateNotificationForSubscribers :exec
-/*
-    notification
- */
-
-INSERT INTO notification (message, fk_chat_room_id, fk_message_id)
-SELECT
-    $1,  -- Tipo de notificação (e.g., 'new_message', 'like', 'unlike')
-    $2,  -- ID da sala de chat (fk_chat_room_id)
-    $3  -- ID da mensagem associada (fk_message_id)
-FROM
-    subscriber AS s
-WHERE
-    s.fk_chat_room_id = $2
-`
-
-type CreateNotificationForSubscribersParams struct {
-	Message      string
-	FkChatRoomID uuid.UUID
-	FkMessageID  uuid.UUID
-}
-
-func (q *Queries) CreateNotificationForSubscribers(ctx context.Context, arg CreateNotificationForSubscribersParams) error {
-	_, err := q.db.ExecContext(ctx, createNotificationForSubscribers, arg.Message, arg.FkChatRoomID, arg.FkMessageID)
-	return err
-}
-
 const createParticipants = `-- name: CreateParticipants :exec
 /*
     Participants
