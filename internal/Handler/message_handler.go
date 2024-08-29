@@ -82,6 +82,16 @@ func (s *MessageHandler) CreateMessageWS(c echo.Context) error {
 	return nil
 }
 
+// ShowAccount godoc
+// @Summary      Like a message
+// @Description  Like a message
+// @Tags         messages
+// @Accept       json
+// @Produce      json
+// @Param   	id path string true "messageId"
+// @Success      200
+// @Failure      500  {object}  Error
+// @Router       /v1/message/like/{id} [patch]
 func (s *MessageHandler) LikeMessage(c echo.Context) error {
 	messageId, err := uuid.Parse(c.Param("messageId"))
 
@@ -119,6 +129,16 @@ func (s *MessageHandler) LikeMessage(c echo.Context) error {
 
 }
 
+// ShowAccount godoc
+// @Summary      Deslike a message
+// @Description  Deslike a message
+// @Tags         messages
+// @Accept       json
+// @Produce      json
+// @Param   	id path string true "messageId"
+// @Success      200
+// @Failure      500  {object}  Error
+// @Router       /v1/message/dislike/{id} [delete]
 func (s *MessageHandler) RemoveLikeMessage(c echo.Context) error {
 	messageId, err := uuid.Parse(c.Param("messageId"))
 

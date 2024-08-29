@@ -1,29 +1,33 @@
-basePath: /v1/
 definitions:
-  entity.ChatRoomEntity:
-    properties:
-      chat_room_id:
-        type: string
-      chat_room_name:
-        type: integer
-    type: object
   handler.Error:
     properties:
       message:
         type: string
     type: object
-host: petstore.swagger.io
+  handler.participantsSwagger:
+    properties:
+      chat_room_id:
+        type: string
+      is_subscribe:
+        type: boolean
+      participant_name:
+        type: string
+    type: object
+  handler.requestBodySwagger:
+    properties:
+      chat_room_name:
+        type: integer
+    type: object
+  swaggerModels.SubscribeSwaggerModel:
+    properties:
+      chat_room_id:
+        type: string
+      participant_id:
+        type: string
+    type: object
 info:
-  contact:
-    email: support@swagger.io
-    name: API Support
-    url: http://www.swagger.io/support
-  description: This is a sample server Petstore server.
-  license:
-    name: Apache 2.0
-    url: http://www.apache.org/licenses/LICENSE-2.0.html
-  termsOfService: http://swagger.io/terms/
-  title: Swagger Example API
+  contact: {}
+  title: Guapi Teste API
   version: "1.0"
 paths:
   /v1/chatroom:
@@ -37,7 +41,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/entity.ChatRoomEntity'
+          $ref: '#/definitions/handler.requestBodySwagger'
       produces:
       - application/json
       responses:
@@ -49,5 +53,122 @@ paths:
             $ref: '#/definitions/handler.Error'
       summary: Create Chat room
       tags:
-      - createRoom
+      - Room
+  /v1/chatroom/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete Chat Room
+      parameters:
+      - description: chat_room_id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.Error'
+      summary: Delete Chat Room
+      tags:
+      - Room
+  /v1/message/dislike/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Deslike a message
+      parameters:
+      - description: messageId
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.Error'
+      summary: Deslike a message
+      tags:
+      - messages
+  /v1/message/like/{id}:
+    patch:
+      consumes:
+      - application/json
+      description: Like a message
+      parameters:
+      - description: messageId
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.Error'
+      summary: Like a message
+      tags:
+      - messages
+  /v1/participants:
+    post:
+      consumes:
+      - application/json
+      description: Create Participant
+      parameters:
+      - description: user request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.participantsSwagger'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.Error'
+      summary: Create Participant
+      tags:
+      - createParticipant
+  /v1/subscribe:
+    post:
+      consumes:
+      - application/json
+      description: Create subscription
+      parameters:
+      - description: user request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/swaggerModels.SubscribeSwaggerModel'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.Error'
+      summary: Create subscription
+      tags:
+      - createSubscribe
 swagger: "2.0"

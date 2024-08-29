@@ -16,20 +16,8 @@ var (
 	ws websocket.Upgrader
 )
 
-// @title Swagger Example API
+// @title Guapi Teste API
 // @version 1.0
-// @description This is a sample server Petstore server.
-// @termsOfService http://swagger.io/terms/
-
-// @contact.name API Support
-// @contact.url http://www.swagger.io/support
-// @contact.email support@swagger.io
-
-// @license.name Apache 2.0
-// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
-
-// @host petstore.swagger.io
-// @BasePath /v1/
 func main() {
 
 	e := echo.New()
@@ -52,9 +40,9 @@ func main() {
 	e.POST("/v1/participants", participatnsHandler.CreateParticipants)
 
 	messageHandler := handler.NewMessageHandler(r.DbHandler(), &ws, make(map[*websocket.Conn]bool))
-	e.GET("/ws/message/:chatRoomId/:participantId", messageHandler.CreateMessageWS)
-	e.PATCH("/v1/message/:messageId", messageHandler.LikeMessage)
-	e.DELETE("/v1/message/:messageId", messageHandler.RemoveLikeMessage)
+	e.GET("/ws/notifier/message/:chatRoomId/:participantId", messageHandler.CreateMessageWS)
+	e.PATCH("/v1/message/like/:messageId", messageHandler.LikeMessage)
+	e.DELETE("/v1/message/dislike/:messageId", messageHandler.RemoveLikeMessage)
 
 	subscribeHandler := handler.NewSubscribeHandler(r.DbHandler())
 	e.POST("/v1/subscribe", subscribeHandler.CreateSubscribeInChatRoom)

@@ -16,3 +16,6 @@ migrateUp:
 
 migrateDown:
 	migrate -path=sql/migrations -database "postgres://postgres:postgres@localhost/guapi_teste?sslmode=disable" -verbose down
+
+swagger:
+	swag init -g cmd/api/main.go

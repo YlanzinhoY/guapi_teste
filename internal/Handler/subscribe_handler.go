@@ -19,6 +19,16 @@ func NewSubscribeHandler(dbHandler *db.Queries) *SubscribeHandler {
 	return &SubscribeHandler{dbHandler: dbHandler}
 }
 
+// ShowAccount godoc
+// @Summary      Create subscription
+// @Description  Create subscription
+// @Tags         createSubscribe
+// @Accept       json
+// @Produce      json
+// @Param        request body swaggerModels.SubscribeSwaggerModel true "user request"
+// @Success      201
+// @Failure      500  {object}  Error
+// @Router       /v1/subscribe [post]
 func (s *SubscribeHandler) CreateSubscribeInChatRoom(c echo.Context) error {
 
 	var subscribeEntity entity.SubscribeEntity

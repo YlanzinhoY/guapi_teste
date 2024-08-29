@@ -9,6 +9,12 @@ import (
 	db "github.com/ylanzinhoy/guapi_teste/sql"
 )
 
+type participantsSwagger struct {
+	Name        string    `json:"participant_name"`
+	ChatRoomId  uuid.UUID `json:"chat_room_id"`
+	IsSubscribe bool      `json:"is_subscribe"`
+}
+
 type ParticipantsHandler struct {
 	dbHandler *db.Queries
 }
@@ -19,6 +25,16 @@ func NewParticipantsHandler(dbHandler *db.Queries) *ParticipantsHandler {
 	}
 }
 
+// ShowAccount godoc
+// @Summary      Create Participant
+// @Description  Create Participant
+// @Tags         createParticipant
+// @Accept       json
+// @Produce      json
+// @Param        request body participantsSwagger true "user request"
+// @Success      201
+// @Failure      500  {object}  Error
+// @Router       /v1/participants [post]
 func (s *ParticipantsHandler) CreateParticipants(c echo.Context) error {
 	var participantsEntity *entity.ParticipantsEntity
 
