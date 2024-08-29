@@ -91,7 +91,6 @@ func (s *MessageHandler) LikeMessage(c echo.Context) error {
 	}
 
 	var messageEntity entity.MessageEntity
-
 	messageEntity.MessageId = messageId
 
 	if err := c.Bind(&messageEntity); err != nil {
@@ -100,11 +99,7 @@ func (s *MessageHandler) LikeMessage(c echo.Context) error {
 		})
 	}
 
-	msg, err := s.dbHandler.PatchLikeMessage(c.Request().Context(), db.PatchLikeMessageParams{
-		MessageID:   messageEntity.MessageId,
-		LikeMessage: messageEntity.LikeMessage,
-	})
-
+	msg, err := s.dbHandler.PatchLikeMessage(c.Request().Context(), messageId)
 	if err != nil {
 		return c.JSON(500, map[string]string{
 			"error": err.Error(),

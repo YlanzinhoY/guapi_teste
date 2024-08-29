@@ -258,21 +258,40 @@ func (q *Queries) FindAllParticipantsSubscribers(ctx context.Context, chatRoomID
 	return items, nil
 }
 
-const getMessagesLikesByChatId = `-- name: GetMessagesLikesByChatId :many
+const getMessageLikes = `-- name: GetMessageLikes :one
+SELECT like_message FROM message
+`
 
-SELECT message_id, like_message
-FROM message
-WHERE fk_chat_room_id = $1
+func (q *Queries) GetMessageLikes(ctx context.Context) (int32, error) {
+	row := q.db.QueryRowContext(ctx, getMessageLikes)
+	var like_message int32
+	err := row.Scan(&like_message)
+	return like_message, err
+}
+
+const getMessagesLikesByChatId = `-- name: GetMessagesLikesByChatId :many
+SELECT
+    m.message_id,
+    m.like_message,
+    m.content,
+    p.name
+FROM
+    message AS m
+        JOIN
+    participants AS p
+    ON
+        m.fk_participants_id = p.participants_id
+WHERE
+    m.fk_chat_room_id = $1
 `
 
 type GetMessagesLikesByChatIdRow struct {
 	MessageID   uuid.UUID
 	LikeMessage int32
+	Content     string
+	Name        string
 }
 
-// -- name: CountMessageLikes :one
-// SELECT like_message from message
-// where message_id = $1;
 func (q *Queries) GetMessagesLikesByChatId(ctx context.Context, fkChatRoomID uuid.UUID) ([]GetMessagesLikesByChatIdRow, error) {
 	rows, err := q.db.QueryContext(ctx, getMessagesLikesByChatId, fkChatRoomID)
 	if err != nil {
@@ -282,7 +301,12 @@ func (q *Queries) GetMessagesLikesByChatId(ctx context.Context, fkChatRoomID uui
 	var items []GetMessagesLikesByChatIdRow
 	for rows.Next() {
 		var i GetMessagesLikesByChatIdRow
-		if err := rows.Scan(&i.MessageID, &i.LikeMessage); err != nil {
+		if err := rows.Scan(
+			&i.MessageID,
+			&i.LikeMessage,
+			&i.Content,
+			&i.Name,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -298,15 +322,10 @@ func (q *Queries) GetMessagesLikesByChatId(ctx context.Context, fkChatRoomID uui
 
 const patchLikeMessage = `-- name: PatchLikeMessage :one
 UPDATE message
-    set like_message = $2
+    set like_message = like_message + 1
 WHERE message_id = $1
 RETURNING message_id, content, like_message ,created_at, fk_chat_room_id, fk_participants_id
 `
-
-type PatchLikeMessageParams struct {
-	MessageID   uuid.UUID
-	LikeMessage int32
-}
 
 type PatchLikeMessageRow struct {
 	MessageID        uuid.UUID
@@ -317,8 +336,8 @@ type PatchLikeMessageRow struct {
 	FkParticipantsID uuid.UUID
 }
 
-func (q *Queries) PatchLikeMessage(ctx context.Context, arg PatchLikeMessageParams) (PatchLikeMessageRow, error) {
-	row := q.db.QueryRowContext(ctx, patchLikeMessage, arg.MessageID, arg.LikeMessage)
+func (q *Queries) PatchLikeMessage(ctx context.Context, messageID uuid.UUID) (PatchLikeMessageRow, error) {
+	row := q.db.QueryRowContext(ctx, patchLikeMessage, messageID)
 	var i PatchLikeMessageRow
 	err := row.Scan(
 		&i.MessageID,

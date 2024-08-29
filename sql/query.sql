@@ -55,7 +55,7 @@ like_message
 
 -- name: PatchLikeMessage :one
 UPDATE message
-    set like_message = $2
+    set like_message = like_message + 1
 WHERE message_id = $1
 RETURNING message_id, content, like_message ,created_at, fk_chat_room_id, fk_participants_id;
 
@@ -66,6 +66,8 @@ WHERE message_id = $1
 AND like_message > 0
 RETURNING message_id, content, like_message ,created_at, fk_chat_room_id, fk_participants_id;
 
+-- name: GetMessageLikes :one
+SELECT like_message FROM message;
 /*
  Subscribe
  */
@@ -115,11 +117,18 @@ SELECT COUNT(*) AS message_count
 FROM message
 WHERE fk_chat_room_id = $1;
 
--- -- name: CountMessageLikes :one
--- SELECT like_message from message
--- where message_id = $1;
 
 -- name: GetMessagesLikesByChatId :many
-SELECT message_id, like_message
-FROM message
-WHERE fk_chat_room_id = $1;
+SELECT
+    m.message_id,
+    m.like_message,
+    m.content,
+    p.name
+FROM
+    message AS m
+        JOIN
+    participants AS p
+    ON
+        m.fk_participants_id = p.participants_id
+WHERE
+    m.fk_chat_room_id = $1;

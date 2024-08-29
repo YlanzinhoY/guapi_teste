@@ -49,22 +49,24 @@ func (s *NotificationHandler) SendNotificationLikeUnLikeMessage(c echo.Context) 
 	if err != nil {
 		return err
 	}
-	var participantEntity entity.ParticipantsEntity
+	var participantEntity []entity.ParticipantsEntity
+
+	participantsSubs, err := s.dbHandler.FindAllParticipantsSubscribers(c.Request().Context(), chatRoomIdParam)
+	if err != nil {
+		return err
+	}
+
+	for _, participant := range participantsSubs {
+		pe := entity.ParticipantsEntity{
+			Id:          participant.ParticipantsID,
+			IsSubscribe: participant.IsSubscribe,
+			ChatRoomId:  chatRoomIdParam,
+			Name:        participant.Name,
+		}
+		participantEntity = append(participantEntity, pe)
+	}
 
 	for {
-
-		participantsSubs, err := s.dbHandler.FindAllParticipantsSubscribers(c.Request().Context(), chatRoomIdParam)
-		if err != nil {
-			return err
-		}
-
-		for _, participant := range participantsSubs {
-			participantEntity.Name = participant.Name
-			participantEntity.Id = participant.ParticipantsID
-			participantEntity.Name = participant.Name
-			participantEntity.ChatRoomId = chatRoomIdParam
-		}
-
 		currentLikes, err := s.dbHandler.GetMessagesLikesByChatId(c.Request().Context(), chatRoomIdParam)
 		if err != nil {
 			return err
@@ -73,22 +75,26 @@ func (s *NotificationHandler) SendNotificationLikeUnLikeMessage(c echo.Context) 
 
 			if currentLikeCount.LikeMessage > initialLikes[messageID].LikeMessage {
 				notification := map[string]interface{}{
-					"notification":            "Like Message",
-					"participant_subscribers": participantEntity,
-					"chat_room_id":            chatRoomIdParam,
-					"message_id":              currentLikeCount.MessageID,
-					"like_message":            currentLikeCount.LikeMessage,
+					"notification_message":                         "Like Message",
+					"send_notification_to_participant_subscribers": &participantEntity,
+					"chat_room_id":                                 chatRoomIdParam,
+					"content":                                      currentLikeCount.Content,
+					"participant_name":                             currentLikeCount.Name,
+					"message_id":                                   currentLikeCount.MessageID,
+					"like_message":                                 currentLikeCount.LikeMessage,
 				}
 				s.broadcastNotification(notification)
 
 				initialLikes[messageID] = currentLikeCount
 			} else if currentLikeCount.LikeMessage < initialLikes[messageID].LikeMessage {
 				notification := map[string]interface{}{
-					"notification":            "Deslike Message",
-					"participant_subscribers": participantEntity,
-					"chat_room_id":            chatRoomIdParam,
-					"message_id":              currentLikeCount.MessageID,
-					"like_message":            currentLikeCount.LikeMessage,
+					"notification_message":                         "Deslike Message",
+					"send_notification_to_participant_subscribers": &participantEntity,
+					"chat_room_id":                                 chatRoomIdParam,
+					"content":                                      currentLikeCount.Content,
+					"participant_name":                             currentLikeCount.Name,
+					"message_id":                                   currentLikeCount.MessageID,
+					"like_message":                                 currentLikeCount.LikeMessage,
 				}
 
 				s.broadcastNotification(notification)
@@ -96,8 +102,6 @@ func (s *NotificationHandler) SendNotificationLikeUnLikeMessage(c echo.Context) 
 				initialLikes[messageID] = currentLikeCount
 			}
 		}
-
-		time.Sleep(1 * time.Second)
 	}
 }
 
@@ -141,20 +145,9 @@ func (s *NotificationHandler) SendNotificationMessage(c echo.Context) error {
 				"count":        messagesCount,
 				"users":        participants,
 			}
-
-			s.mu.Lock()
-			for conn := range s.wsConnections {
-				if err := conn.WriteJSON(notification); err != nil {
-					log.Printf("error writing notification to websocket: %v", err)
-					conn.Close()
-					delete(s.wsConnections, conn)
-				}
-			}
-			s.mu.Unlock()
-
+			s.broadcastNotification(notification)
 			initialMessageCount = messagesCount
 		}
-
 		time.Sleep(2 * time.Second)
 	}
 }
